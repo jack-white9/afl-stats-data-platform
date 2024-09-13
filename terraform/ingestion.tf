@@ -42,6 +42,7 @@ resource "aws_iam_role_policy" "glue_s3_access" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
+          "s3:DeleteObject",
           "s3:ListBucket"
         ],
         Resource = [
@@ -53,6 +54,7 @@ resource "aws_iam_role_policy" "glue_s3_access" {
     ]
   })
 }
+
 
 # Create glue job
 resource "aws_glue_job" "raw_ingestion" {
