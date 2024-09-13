@@ -1,12 +1,14 @@
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import pandas as pd
+from datetime import datetime
 import re
 
 
 def create_player_df() -> pd.DataFrame:
     df = pd.DataFrame(
         columns=[
+            "Year",
             "Team",
             "#",
             "Player",
@@ -41,7 +43,8 @@ def create_player_df() -> pd.DataFrame:
     return df
 
 
-def parse_afl_tables(url: str, df: pd.DataFrame) -> pd.DataFrame:
+def parse_afl_tables(df: pd.DataFrame, year: int) -> pd.DataFrame:
+    url = f"https://afltables.com/afl/stats/{year}.html"
     html = urlopen(url).read().decode("utf-8")
     soup = BeautifulSoup(html, "html.parser")
 
@@ -64,10 +67,12 @@ def parse_afl_tables(url: str, df: pd.DataFrame) -> pd.DataFrame:
         for player in players:
             player_data = player.find_all("td")
             player_data = [col.text.strip() for col in player_data]
-            df.loc[len(df)] = [team_name] + player_data
+            df.loc[len(df)] = [year] + [team_name] + player_data
 
 
 if __name__ == "__main__":
     df = create_player_df()
-    parse_afl_tables("https://afltables.com/afl/stats/2024.html", df)
+    for year in range(1897, datetime.now().year + 1):
+        print(year)
+        parse_afl_tables(df, year)
     print(df)
