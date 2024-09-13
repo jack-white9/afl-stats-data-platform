@@ -91,3 +91,6 @@ if __name__ == "__main__":
 
     df = spark.createDataFrame(all_player_data, schema)
     df.show()
+    df.write.parquet(
+        "s3://afl-data-platform-raw-data/afl_player_stats", mode="overwrite"
+    )
