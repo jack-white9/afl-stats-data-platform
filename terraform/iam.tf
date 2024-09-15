@@ -53,7 +53,8 @@ resource "aws_iam_role_policy" "glue_catalog_access" {
           "glue:BatchCreatePartition",
           "glue:BatchDeletePartition",
           "glue:GetPartition",
-          "glue:BatchGetPartition"
+          "glue:BatchGetPartition",
+          "glue:UpdatePartition"
         ],
         Resource = [
           "arn:aws:glue:ap-southeast-2:${data.aws_caller_identity.current.account_id}:catalog",
