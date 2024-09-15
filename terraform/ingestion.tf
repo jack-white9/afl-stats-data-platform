@@ -1,4 +1,3 @@
-# Create s3 bucket to store glue script
 resource "aws_s3_bucket" "glue_scripts" {
   bucket = "afl-data-platform-glue-scripts"
 }
@@ -9,54 +8,10 @@ resource "aws_s3_object" "scraper" {
   source = "../scraper/main.py"
 }
 
-# Create s3 bucket for raw data ingested by glue job
 resource "aws_s3_bucket" "raw_data" {
   bucket = "afl-data-platform-raw-data"
 }
 
-# Create glue role
-resource "aws_iam_role" "glue" {
-  name = "afl-data-platform-glue-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "glue.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "glue_s3_access" {
-  name = "glue_s3_access_policy"
-  role = aws_iam_role.glue.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ],
-        Resource = [
-          "arn:aws:s3:::${aws_s3_bucket.raw_data.bucket}",
-          "arn:aws:s3:::${aws_s3_bucket.raw_data.bucket}/*",
-          "arn:aws:s3:::${aws_s3_bucket.glue_scripts.bucket}/*"
-        ]
-      }
-    ]
-  })
-}
-
-
-# Create glue job
 resource "aws_glue_job" "raw_ingestion" {
   name     = "afl-data-platform-raw-ingestion"
   role_arn = aws_iam_role.glue.arn
@@ -68,5 +23,20 @@ resource "aws_glue_job" "raw_ingestion" {
 
   default_arguments = {
     "--additional-python-modules" = "beautifulsoup4==4.12.3"
+  }
+}
+
+resource "aws_glue_catalog_database" "raw_data" {
+  name = "afl-data-platform-raw-data"
+}
+
+# use one crawler per data source
+resource "aws_glue_crawler" "players" {
+  database_name = aws_glue_catalog_database.raw_data.name
+  name          = "afl-data-platform-raw-data-crawler-players"
+  role          = aws_iam_role.glue.arn
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.raw_data.bucket}/players/"
   }
 }
