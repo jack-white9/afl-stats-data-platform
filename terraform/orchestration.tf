@@ -1,4 +1,4 @@
-resource "aws_sfn_state_machine" "sfn_state_machine" {
+resource "aws_sfn_state_machine" "this" {
   name     = "afl-data-platform-orchestrator"
   role_arn = aws_iam_role.sfn.arn
 
@@ -26,4 +26,21 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
   }
 }
 EOF
+}
+
+resource "aws_scheduler_schedule" "this" {
+  name       = "afl-data-platform-orchestrator-schedule"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression          = "cron(0 0 ? * 1 *)"
+  schedule_expression_timezone = "Australia/Melbourne"
+
+  target {
+    arn      = aws_sfn_state_machine.this.arn
+    role_arn = aws_iam_role.eventbridge.arn
+  }
 }
